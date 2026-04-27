@@ -4,3 +4,4 @@ langchain_community
 langchain_openai
 llama_parse
 flask
+markdown
