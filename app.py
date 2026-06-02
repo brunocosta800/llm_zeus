@@ -64,19 +64,16 @@ DADOS DA EMPRESA:
 - Ano Fiscal: {ano_fiscal}
 
 MATRIZ DE RISCO E GATILHOS (CRITÉRIOS PARA QUESTIONAMENTO):
-1. DISCREPÂNCIA FISCAL-CONTÁBIL: Isole a análise ano a ano. Extraia o "Valor Total Anual" do Livro Fiscal e compare com o "Saldo Total Anual" do Balancete/Razão do MESMO ANO. Calcule a diferença (gap). Se não baterem, o gatilho é acionado.
-2. VARIAÇÃO ANUAL (RELEVÂNCIA): Se houver aumento ou redução de receita superior a 2% em relação ao ano anterior.
-3. DISTORÇÃO MENSAL (LINEARIDADE): Se a receita de um mês específico divergir mais de 2% da média mensal do exercício.
-4. CONFORMIDADE TRIBUTÁRIA (Variação de Imposto Calculado): O cálculo deve ser feito comparando totais. Multiplique o "Valor Total Contábil" pela alíquota padrão do {regime_tributario} para encontrar o "Imposto Esperado". Compare esse valor com o "Imposto Retido/Informado" no Livro Fiscal. Se a diferença percentual entre eles (ex: 120.000 vs 95.000) for maior que 2%, acione o gatilho.
+1. DISCREPÂNCIA FISCAL-CONTÁBIL: Compare o "Valor Total Anual" do Livro Fiscal com o "Saldo Total Anual" do Balancete/Razão do MESMO ANO. Se não baterem, o gatilho é acionado.
+2. VARIAÇÃO ANUAL: Aumento ou redução de receita superior a 2% em relação ao ano anterior.
+3. DISTORÇÃO MENSAL: Receita de um mês específico divergindo mais de 2% da média mensal.
+4. CONFORMIDADE TRIBUTÁRIA: Multiplique o "Valor Total Contábil" pela alíquota padrão. Compare com o "Imposto Retido/Informado". Diferença > 2% aciona o gatilho.
 
-REGRAS CRÍTICAS DE EXECUÇÃO:
-- ZERO ALUCINAÇÃO: Proibido inferir dados. Se o documento não cita o valor, declare "Informação não disponível".
-- RASTREABILIDADE (CITAÇÕES): Todo dado numérico deve ser seguido de (Fonte: [Arquivo], Seção: [X]).
-- LÓGICA ANALÍTICA: Antes de responder, compare os valores entre os diferentes arquivos (ex: Livro Fiscal vs. Razão).
-- FORMATAÇÃO MATEMÁTICA: Proibido o uso de notação LaTeX (como \[ \], $ ou \text). Apresente os cálculos em texto plano de forma direta.
-- ISOLAMENTO TEMPORAL (MUITO CRÍTICO): Nunca cruze dados de anos diferentes. Se você está avaliando o Livro Fiscal de 2024, compare EXCLUSIVAMENTE com o Razão/Balancete de 2024.
-- DATAMENTO (MUITO CRÍTICO): Resgate dados apenas do ano fiscal vigente, {ano_fiscal}, e de um ano antes. Nunca fique comparando anos fiscais distantes.
-- PRIORIDADE DE DOCUMENTOS: Antes de declarar uma discrepância, verifica obrigatoriamente se existe algum documento do tipo "Resposta da Gestão", "Nota Técnica" ou "Justificativa" no contexto e usa as informações ali contidas para sanar dúvidas fiscais.
+REGRAS CRÍTICAS DE FORMATAÇÃO E SÍNTESE (MUITO IMPORTANTE):
+- NOME DAS FONTES: Nunca imprima hashes ou números longos de arquivos. Resuma o nome (Ex: em vez de "177956...-razao_24_25.pdf", escreva apenas "Razão 2025").
+- SÍNTESE DE DADOS: Se vários meses tiverem o mesmo valor, AGRUPE-OS em uma única linha (Ex: "Jan a Out: R$ 125.000,00 mensais"). Jamais liste 12 meses idênticos um embaixo do outro.
+- USO DE TABELAS: Sempre que houver mais de 3 valores para apresentar (como meses ou comparativos de impostos), use uma tabela Markdown limpa.
+- CÁLCULOS LIMPOS: Proibido o uso de LaTeX ou notações como `\frac`. Use textos simples em uma linha só (Ex: Variação = (100 - 50) / 50 * 100 = 100%).
 
 DOCUMENTOS FORNECIDOS (Contexto RAG):
 {contexto_rag}
@@ -84,11 +81,18 @@ DOCUMENTOS FORNECIDOS (Contexto RAG):
 TÓPICO DE AUDITORIA A SER EXECUTADO:
 {pergunta}
 
-ESTRUTURA DA RESPOSTA ESPERADA (PASSO A PASSO OBRIGATÓRIO):
-1. Extração de Dados: Liste os valores brutos encontrados no contexto (Ex: Total Contábil 2024 = X, Total Fiscal 2024 = Y).
-2. Constatação: Descreva o fato encontrado comparando os dados extraídos.
-3. Análise Técnica: Mostre a fórmula matemática aplicada em texto plano para provar se o limite de 2% foi ultrapassado ou se há gap.
-4. Questionamento (SE APLICÁVEL): Formule a pergunta formal para a administração. Se não houver distorção, escreva "Nenhum apontamento a ser feito".
+ESTRUTURA OBRIGATÓRIA DA RESPOSTA:
+**1. Extração de Dados**
+(Use uma tabela Markdown se houver muitos dados, ou tópicos muito curtos. Cite a fonte de forma resumida ao lado).
+
+**2. Constatação**
+(Máximo de 2 parágrafos diretos e objetivos).
+
+**3. Análise Técnica**
+(Apresente a lógica matemática de forma limpa, direta e em linha única. Destaque o resultado final em negrito).
+
+**4. Questionamento à Administração**
+> (Use o sinal de maior '>' para criar a citação). Seja cirúrgico e breve na pergunta.
 """
 
 prompt_auditoria = PromptTemplate.from_template(template_auditoria)
@@ -107,26 +111,22 @@ chain_auditoria = (
 )
 
 template_conclusao = """
-Você é um Auditor Sénior. A sua tarefa é ler as constatações de um relatório de auditoria recém-gerado e emitir um Parecer Final e uma Classificação de Risco.
+Você é um Auditor Sénior. A sua tarefa é ler as constatações de um relatório recém-gerado e emitir um Parecer Final.
 
 RELATÓRIO DE AUDITORIA GERADO (Análises 1 a 4):
 {relatorio_gerado}
 
 REGRAS PARA A CONCLUSÃO:
-1. Resumo de Riscos: Sintetize em 1 ou 2 parágrafos os principais problemas financeiros/fiscais encontrados nas análises acima (se houverem).
-2. Classificação: Atribua uma (e apenas uma) das seguintes cores à situação final da empresa, baseada na gravidade dos apontamentos:
-   - Sem ressalvas: Limpo ou sem ressalvas (Nenhum gatilho ou distorção relevante acionada).
-   - Com ressalvas: Com ressalvas (Distorções leves, problemas de linearidade ou variações justificáveis de receita).
-   - Adverso: Adverso (Divergências fiscais/contábeis claras ou cálculos errados de impostos).
-   - Abstenção: Abstenção ou Negativa (Falta grave de dados, sumiço de bases de cálculo ou omissão massiva).
-3. Justificativa da Cor: Explique sinteticamente (2-3 linhas) o que levou a essa cor.
+1. Resumo de Riscos: Sintetize em bullet points os principais problemas encontrados.
+2. Classificação: Atribua uma (e apenas uma) cor/status: Sem ressalvas, Com ressalvas, Adverso ou Abstenção.
 
-ESTRUTURA DA RESPOSTA ESPERADA:
-**Classificação de Risco:** [COR]
-**Justificativa:** [Sua justificativa sintética]
+ESTRUTURA OBRIGATÓRIA DA RESPOSTA (Use Markdown):
+* **Classificação de Risco:** **[SUA CLASSIFICAÇÃO]**
+* **Justificativa:** [Sua justificativa sintética de 2 a 3 linhas]
 
 **Resumo Executivo de Riscos:**
-[Seu resumo das 4 análises]
+* [Ponto de risco 1]
+* [Ponto de risco 2]
 """
 prompt_conclusao = PromptTemplate.from_template(template_conclusao)
 chain_conclusao = prompt_conclusao | llm_redator | StrOutputParser()
@@ -251,19 +251,75 @@ def api_gerar_relatorio():
         cid_hash = str(uuid.uuid4()) 
         print("Convertendo Markdown para PDF de Auditoria...")
         
-        html_content = markdown.markdown(relatorio_completo, extensions=['tables'])
+        # IMPORTANTE: Adicione a extensão 'nl2br' e 'sane_lists' para o markdown não quebrar as listas e as fórmulas
+        html_content = markdown.markdown(
+            relatorio_completo, 
+            extensions=['tables', 'nl2br', 'sane_lists']
+        )
         
         html_com_estilo = f"""
         <html>
             <head>
                 <style>
-                    body {{ font-family: 'Times New Roman', serif; line-height: 1.5; padding: 2em; color: #111; }}
-                    h1 {{ color: #000; border-bottom: 3px double #000; padding-bottom: 5px; text-align: center; }}
-                    h2 {{ color: #333; margin-bottom: 5px; }}
-                    h3 {{ color: #444; background-color: #f4f4f4; padding: 5px; border-left: 4px solid #555; }}
-                    p {{ font-size: 11pt; }}
-                    hr {{ border: 0; border-top: 1px dashed #ccc; margin: 25px 0; }}
-                    .footer {{ font-size: 9px; color: #666; text-align: center; margin-top: 50px; border-top: 1px solid #eee; padding-top: 10px; }}
+                    @page {{ margin: 2.5cm; }}
+                    body {{ 
+                        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
+                        line-height: 1.8; /* Aumentado para dar mais respiro à leitura */
+                        color: #333; 
+                        font-size: 11pt;
+                    }}
+                    h1 {{ 
+                        color: #1a252f; 
+                        border-bottom: 2px solid #34495e; 
+                        padding-bottom: 10px; 
+                        text-align: center;
+                        font-size: 16pt;
+                        margin-bottom: 40px;
+                    }}
+                    h2 {{ color: #2c3e50; font-size: 14pt; margin-top: 30px; margin-bottom: 15px; }}
+                    h3 {{ 
+                        color: #2980b9; 
+                        background-color: #f7f9fa; 
+                        padding: 12px 15px; 
+                        border-left: 5px solid #2980b9; 
+                        font-size: 12pt;
+                        margin-top: 35px;
+                        margin-bottom: 20px;
+                    }}
+                    p {{ text-align: justify; margin-bottom: 20px; }}
+                    
+                    /* Estilização limpa para as Listas */
+                    ul, ol {{ margin-top: 10px; margin-bottom: 25px; padding-left: 20px; }}
+                    li {{ margin-bottom: 12px; padding-left: 5px; }}
+                    
+                    /* Estilização para as Tabelas que o LLM vai gerar */
+                    table {{ 
+                        width: 100%; 
+                        border-collapse: collapse; 
+                        margin: 25px 0; 
+                        font-size: 10pt;
+                    }}
+                    th {{ background-color: #ecf0f1; border-bottom: 2px solid #bdc3c7; text-align: left; padding: 10px; }}
+                    td {{ border-bottom: 1px solid #ecf0f1; padding: 10px; }}
+                    
+                    blockquote {{ 
+                        border-left: 4px solid #e74c3c; 
+                        background-color: #fcf3f2; 
+                        margin: 25px 0; 
+                        padding: 15px 20px; 
+                        font-style: italic; 
+                        color: #c0392b;
+                    }}
+                    
+                    hr {{ border: 0; border-top: 1px solid #bdc3c7; margin: 40px 0; }}
+                    .footer {{ 
+                        font-size: 8pt; 
+                        color: #7f8c8d; 
+                        text-align: center; 
+                        margin-top: 50px; 
+                        border-top: 1px solid #ecf0f1; 
+                        padding-top: 15px; 
+                    }}
                 </style>
             </head>
             <body>
