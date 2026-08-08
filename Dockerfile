@@ -1,11 +1,11 @@
-# Usa a imagem oficial do Python 3.13 (versão leve)
-FROM python:3.13-slim
+# Usa a versão estável 'bookworm' para evitar conflitos de pacotes futuros
+FROM python:3.13-slim-bookworm
 
 # Impede a criação de arquivos .pyc e força o log a aparecer no terminal
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Instala todas as dependências de sistema do WeasyPrint
+# Instala todas as dependências de sistema do WeasyPrint com os nomes corretos
 RUN apt-get update && apt-get install -y \
     build-essential \
     python3-cffi \
@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
     libpango-1.0-0 \
     libpangocairo-1.0-0 \
     libpangoft2-1.0-0 \
-    libgdk-pixbuf2.0-0 \
+    libgdk-pixbuf-2.0-0 \
     libffi-dev \
     shared-mime-info \
     libglib2.0-0 \
